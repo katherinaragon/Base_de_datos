@@ -6,6 +6,7 @@ USE gymconnect_db;
 
 
 -- 1. Scripts de creación de todas las tablas
+--Victor Manuel
 
 CREATE TABLE rol_empleado (
     id_rol  INT AUTO_INCREMENT PRIMARY KEY,
