@@ -1,6 +1,6 @@
 USE gymconnect_db;
 
-
+-- prueba commits
 -- Consulta 1
 SELECT
     cl.nombre_clase,
@@ -17,7 +17,7 @@ INNER JOIN empleado e     ON e.id_empleado = tr.id_empleado
 ORDER BY hc.fecha_sesion, hc.hora_inicio;
 
 -- Consulta 2
-
+-- realizando pruebas
 SELECT
     CONCAT(c.nombres, ' ', c.apellidos) AS cliente,
     cl.nombre_clase,
@@ -46,7 +46,7 @@ INNER JOIN membresia_plan mp    ON mp.id_plan = mc.id_plan
 ORDER BY p.fecha_pago DESC;
 
 -- Consulta 4
-
+--Prueba 4
 SELECT
     CONCAT(e.nombres, ' ', e.apellidos)   AS empleado,
     r.nombre_rol,
