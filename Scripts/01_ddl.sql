@@ -1,11 +1,11 @@
 
--- 0. CREACION DE LA BASE DE DATOS
+-- 0. CREACION DE LA BASE DE DATOS  
 
 CREATE DATABASE gymconnect_db  
 USE gymconnect_db;
 
 
--- 1. Creación de tablas
+-- 1. Scripts de creación de todas las tablas
 
 CREATE TABLE rol_empleado (
     id_rol  INT AUTO_INCREMENT PRIMARY KEY,
