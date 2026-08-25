@@ -1,9 +1,32 @@
+-- =====================================================================
+-- PROYECTO BD: GYMCONNECT - PROGRAMACIÓN DE OBJETOS DE BASE DE DATOS
+-- Archivo: 04_objetos.sql
+-- Motor: MySQL / MariaDB
+--
+-- Notas del grupo:
+-- Este script define la capa de lógica de negocio almacenada: Vistas,
+-- Función de usuario, Triggers de validación/auditoría/actualización,
+-- Procedimientos Almacenados y Transacción Explicita (numeral 7.2).
+-- Debe ejecutarse inmediatamente después de 01_ddl.sql y 02_inserts.sql.
+--
+--                          Integrantes:
+--                    Katherin Aragón Calderon
+--                      Victor Manuel Aragón
+--                      Julio Cesar Villegas
+--                      Oscar Esteban Lopez
+--                      Juan Pablo Giraldo
+-- =====================================================================
 
 USE gymconnect_db;
 
+-- =====================================================================
+-- 1. VISTAS GERENCIALES (3 vistas)
+-- =====================================================================
 
--- 1. VISTAS (3)
-
+-- 1.1 vista_membresias_activas
+-- Propósito: Consolida cliente, membresia_plan y membresia_cliente
+-- para proporcionar un reporte directo de miembros activos y sus días restantes.
+DROP VIEW IF EXISTS vista_membresias_activas;
 CREATE VIEW vista_membresias_activas AS
 SELECT
     mc.id_membresia_cliente,
@@ -19,7 +42,10 @@ JOIN cliente c        ON c.id_cliente = mc.id_cliente
 JOIN membresia_plan mp ON mp.id_plan = mc.id_plan
 WHERE mc.estado = 'activa';
 
-
+-- 1.2 vista_ocupacion_clases
+-- Propósito: Integra clase, horario_clase, zona, entrenador,
+-- empleado y asistencia para evaluar la ocupación y cupos disponibles en cada sesión.
+DROP VIEW IF EXISTS vista_ocupacion_clases;
 CREATE VIEW vista_ocupacion_clases AS
 SELECT
     cl.nombre_clase,
@@ -41,7 +67,10 @@ LEFT JOIN asistencia a ON a.id_clase = hc.id_clase AND a.numero_sesion = hc.nume
 GROUP BY hc.id_clase, hc.numero_sesion, cl.nombre_clase, hc.fecha_sesion, hc.hora_inicio,
          z.nombre_zona, entrenador, hc.cupo_maximo;
 
-
+-- 1.3 vista_ingresos_por_plan
+-- Propósito: Agrupa los pagos completados por plan y período (YYYY-MM)
+-- para el seguimiento de ingresos dentro del módulo financiero.
+DROP VIEW IF EXISTS vista_ingresos_por_plan;
 CREATE VIEW vista_ingresos_por_plan AS
 SELECT
     mp.nombre_plan,
@@ -55,9 +84,12 @@ WHERE p.estado_pago = 'completado'
 GROUP BY mp.nombre_plan, DATE_FORMAT(p.fecha_pago, '%Y-%m');
 
 
--- 2. FUNCION (1)
+-- =====================================================================
+-- 2. FUNCIONES DEFINIDAS POR EL USUARIO (1 función)
+-- =====================================================================
 
-
+-- fn_edad_cliente: Calcula la edad exacta en años a partir de la fecha de nacimiento.
+DROP FUNCTION IF EXISTS fn_edad_cliente;
 DELIMITER $$
 CREATE FUNCTION fn_edad_cliente(p_fecha_nacimiento DATE)
 RETURNS INT
@@ -67,7 +99,7 @@ BEGIN
 END$$
 DELIMITER ;
 
-
+-- Demostración de uso de la función en una consulta SELECT (Requisito 7.2):
 SELECT
     CONCAT(nombres, ' ', apellidos) AS cliente,
     fecha_nacimiento,
@@ -76,8 +108,15 @@ FROM cliente
 ORDER BY edad_calculada DESC
 LIMIT 10;
 
--- 3. TRIGGERS
 
+-- =====================================================================
+-- 3. TRIGGERS Y REGLAS DE NEGOCIO (8 triggers)
+-- =====================================================================
+
+-- ---------------------------------------------------------------------
+-- 3.1 VALIDACIÓN COMPLEJA - RN-01: Evitar membresías activas simultáneas
+-- ---------------------------------------------------------------------
+DROP TRIGGER IF EXISTS trg_membresia_valida_activa_ins;
 DELIMITER $$
 CREATE TRIGGER trg_membresia_valida_activa_ins
 BEFORE INSERT ON membresia_cliente
@@ -90,13 +129,13 @@ BEGIN
         WHERE id_cliente = NEW.id_cliente AND estado = 'activa';
         IF v_activas > 0 THEN
             SIGNAL SQLSTATE '45000'
-                SET MESSAGE_TEXT = 'RN-01: el cliente ya tiene una membresia activa vigente.';
+                SET MESSAGE_TEXT = 'RN-01: El cliente ya tiene una membresia activa vigente.';
         END IF;
     END IF;
 END$$
 DELIMITER ;
 
-
+DROP TRIGGER IF EXISTS trg_membresia_valida_activa_upd;
 DELIMITER $$
 CREATE TRIGGER trg_membresia_valida_activa_upd
 BEFORE UPDATE ON membresia_cliente
@@ -110,14 +149,16 @@ BEGIN
           AND id_membresia_cliente <> NEW.id_membresia_cliente;
         IF v_activas > 0 THEN
             SIGNAL SQLSTATE '45000'
-                SET MESSAGE_TEXT = 'RN-01: el cliente ya tiene una membresia activa vigente.';
+                SET MESSAGE_TEXT = 'RN-01: El cliente ya tiene una membresia activa vigente.';
         END IF;
     END IF;
 END$$
 DELIMITER ;
 
-
-
+-- ---------------------------------------------------------------------
+-- 3.2 VALIDACIÓN COMPLEJA - RN-04: Control de cupo máximo en sesiones
+-- ---------------------------------------------------------------------
+DROP TRIGGER IF EXISTS trg_asistencia_valida_cupo;
 DELIMITER $$
 CREATE TRIGGER trg_asistencia_valida_cupo
 BEFORE INSERT ON asistencia
@@ -135,13 +176,15 @@ BEGIN
 
     IF v_ocupados >= v_cupo THEN
         SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'RN-04: la sesion ya alcanzo su cupo maximo de asistentes.';
+            SET MESSAGE_TEXT = 'RN-04: La sesion ya alcanzo su cupo maximo de asistentes.';
     END IF;
 END$$
 DELIMITER ;
 
-
-
+-- ---------------------------------------------------------------------
+-- 3.3 VALIDACIÓN COMPLEJA - RN-10: Evitar cruce de horarios en entrenadores
+-- ---------------------------------------------------------------------
+DROP TRIGGER IF EXISTS trg_horario_valida_traslape;
 DELIMITER $$
 CREATE TRIGGER trg_horario_valida_traslape
 BEFORE INSERT ON horario_clase
@@ -157,12 +200,15 @@ BEGIN
 
     IF v_choques > 0 THEN
         SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'RN-10: el entrenador ya tiene una sesion asignada que se traslapa con este horario.';
+            SET MESSAGE_TEXT = 'RN-10: El entrenador ya tiene una sesion asignada que se traslapa con este horario.';
     END IF;
 END$$
 DELIMITER ;
 
-
+-- ---------------------------------------------------------------------
+-- 3.4 VALIDACIÓN COMPLEJA - RN-02: Restricción de rol para entrenadores
+-- ---------------------------------------------------------------------
+DROP TRIGGER IF EXISTS trg_entrenador_valida_rol;
 DELIMITER $$
 CREATE TRIGGER trg_entrenador_valida_rol
 BEFORE INSERT ON entrenador
@@ -176,12 +222,15 @@ BEGIN
 
     IF v_rol IS NULL OR v_rol <> 'Entrenador' THEN
         SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'RN-02: solo un empleado con rol Entrenador puede registrarse como entrenador.';
+            SET MESSAGE_TEXT = 'RN-02: Solo un empleado con rol Entrenador puede registrarse como entrenador.';
     END IF;
 END$$
 DELIMITER ;
 
-
+-- ---------------------------------------------------------------------
+-- 3.5 VALIDACIÓN COMPLEJA - RN-07: Impedir auto-supervisión en empleados
+-- ---------------------------------------------------------------------
+DROP TRIGGER IF EXISTS trg_empleado_valida_supervisor;
 DELIMITER $$
 CREATE TRIGGER trg_empleado_valida_supervisor
 BEFORE UPDATE ON empleado
@@ -189,12 +238,15 @@ FOR EACH ROW
 BEGIN
     IF NEW.id_supervisor = NEW.id_empleado THEN
         SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'RN-07: un empleado no puede ser su propio supervisor.';
+            SET MESSAGE_TEXT = 'RN-07: Un empleado no puede ser su propio supervisor.';
     END IF;
 END$$
 DELIMITER ;
 
-
+-- ---------------------------------------------------------------------
+-- 3.6 ACTUALIZACIÓN AUTOMÁTICA - RN-12: Sincronización de pago rechazado
+-- ---------------------------------------------------------------------
+DROP TRIGGER IF EXISTS trg_pago_actualiza_membresia;
 DELIMITER $$
 CREATE TRIGGER trg_pago_actualiza_membresia
 AFTER INSERT ON pago
@@ -209,7 +261,10 @@ BEGIN
 END$$
 DELIMITER ;
 
-
+-- ---------------------------------------------------------------------
+-- 3.7 AUDITORÍA INTEGRAL - RN-11: Trazabilidad de cambios sobre la tabla pago
+-- ---------------------------------------------------------------------
+DROP TRIGGER IF EXISTS trg_pago_auditoria_insert;
 DELIMITER $$
 CREATE TRIGGER trg_pago_auditoria_insert
 AFTER INSERT ON pago
@@ -225,7 +280,7 @@ BEGIN
 END$$
 DELIMITER ;
 
-
+DROP TRIGGER IF EXISTS trg_pago_auditoria_update;
 DELIMITER $$
 CREATE TRIGGER trg_pago_auditoria_update
 AFTER UPDATE ON pago
@@ -244,7 +299,7 @@ BEGIN
 END$$
 DELIMITER ;
 
-
+DROP TRIGGER IF EXISTS trg_pago_auditoria_delete;
 DELIMITER $$
 CREATE TRIGGER trg_pago_auditoria_delete
 AFTER DELETE ON pago
@@ -262,8 +317,13 @@ END$$
 DELIMITER ;
 
 
--- 4. PROCEDIMIENTOS 
+-- =====================================================================
+-- 4. PROCEDIMIENTOS ALMACENADOS (2 procedimientos)
+-- =====================================================================
 
+-- 4.1 sp_registrar_pago
+-- Registra pagos asociados a una membresía controlando excepciones con HANDLER.
+DROP PROCEDURE IF EXISTS sp_registrar_pago;
 DELIMITER $$
 CREATE PROCEDURE sp_registrar_pago(
     IN  p_id_membresia INT,
@@ -292,7 +352,9 @@ BEGIN
 END$$
 DELIMITER ;
 
-
+-- 4.2 sp_inscribir_cliente_clase
+-- Procesa inscripciones capturando errores del trigger de cupos (trg_asistencia_valida_cupo).
+DROP PROCEDURE IF EXISTS sp_inscribir_cliente_clase;
 DELIMITER $$
 CREATE PROCEDURE sp_inscribir_cliente_clase(
     IN  p_id_cliente    INT,
@@ -316,6 +378,13 @@ END$$
 DELIMITER ;
 
 
+-- =====================================================================
+-- 5. TRANSACCION EXPLICITA (Proceso de Venta Integrado)
+-- =====================================================================
+
+-- sp_inscripcion_con_pago: Proceso atómico que crea la membresía y el pago inicial.
+-- En caso de fallo en cualquier instrucción, revierte cambios manteniendo consistencia.
+DROP PROCEDURE IF EXISTS sp_inscripcion_con_pago;
 DELIMITER $$
 CREATE PROCEDURE sp_inscripcion_con_pago(
     IN  p_id_cliente    INT,
@@ -355,5 +424,4 @@ BEGIN
     SET p_resultado = CONCAT('Inscripcion y pago registrados correctamente. id_membresia_cliente = ', v_id_membresia);
 END$$
 DELIMITER ;
-
 
