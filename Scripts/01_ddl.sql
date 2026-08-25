@@ -1,12 +1,39 @@
+-- =====================================================================
+-- PROYECTO BD: GYMCONNECT-SCRIPT DDL
+-- Archivo: 01_ddl.sql
+-- Motor objetivo: MySQL/MariaDB
+--
+-- Notas del grupo:
+-- Armamos el orden de las tablas cuidando las llaves foráneas para que no
+-- dé error al ejecutarlo (primero las tablas independientes/catálogos, 
+-- luego las que dependen de ellas y al final las intermedias N:M).
+-- 
+-- Alcance del sistema: Gimnasio de 3 pisos (gestión de clientes, 
+-- empleados/entrenadores, planes, clases grupales, equipos y pagos).
+--
+--                           Integrantes:
+--                    Katherin Aragón Calderon
+--                      Victor Manuel Aragón
+--                      Julio Cesar Villegas
+--                      Oscar Esteban Lopez
+--                      Juan Pablo Giraldo
+-- =====================================================================
 
--- 0. CREACION DE LA BASE DE DATOS  
 
-CREATE DATABASE gymconnect_db  
+-- 0. BASE DE DATOS
+-- ---------------------------------------------------------------------
+-- Limpiamos por si ya existe para probar desde cero
+DROP DATABASE IF EXISTS gymconnect_db;
+CREATE DATABASE gymconnect_db;
+
+
 USE gymconnect_db;
 
+-- ---------------------------------------------------------------------
+-- 1. TABLAS BÁSICAS Y CATÁLOGOS (Sin dependencias)
+-- ---------------------------------------------------------------------
 
--- 1. Scripts de creación de todas las tablas
-
+-- Cargo o rol de los trabajadores (Recepción,Entrenador,Admin, etc.)
 CREATE TABLE rol_empleado (
     id_rol  INT AUTO_INCREMENT PRIMARY KEY,
     nombre_rol  VARCHAR(40)  NOT NULL,
@@ -14,71 +41,78 @@ CREATE TABLE rol_empleado (
     CONSTRAINT uq_rol_nombre UNIQUE (nombre_rol)
 );
 
+-- Áreas del gimnasio distribuidas en los 3 pisos (según el plano de red)
 CREATE TABLE zona (
-    id_zona          INT AUTO_INCREMENT PRIMARY KEY,
-    nombre_zona      VARCHAR(60) NOT NULL,
-    piso             TINYINT     NOT NULL,
-    capacidad_maxima INT         NOT NULL,
+    id_zona    INT AUTO_INCREMENT PRIMARY KEY,
+    nombre_zona   VARCHAR(60) NOT NULL,
+    piso    TINYINT     NOT NULL,
+    capacidad_maxima INT  NOT NULL,
     CONSTRAINT uq_zona_nombre_piso UNIQUE (nombre_zona, piso),
-    CONSTRAINT ck_zona_piso        CHECK (piso BETWEEN 1 AND 3),
-    CONSTRAINT ck_zona_capacidad   CHECK (capacidad_maxima > 0)
+    CONSTRAINT ck_zona_piso CHECK (piso BETWEEN 1 AND 3),
+    CONSTRAINT ck_zona_capacidad CHECK (capacidad_maxima > 0)
 );
 
-
+-- Catálogo de planes que se venden (Mensual,Anual, etc.)
 CREATE TABLE membresia_plan (
-    id_plan         INT AUTO_INCREMENT PRIMARY KEY,
-    nombre_plan     VARCHAR(50)    NOT NULL,
-    duracion_meses  INT            NOT NULL,
-    precio          DECIMAL(10,2)  NOT NULL,
-    descripcion     VARCHAR(200)   NULL,
-    CONSTRAINT uq_plan_nombre     UNIQUE (nombre_plan),
-    CONSTRAINT ck_plan_duracion   CHECK (duracion_meses > 0),
-    CONSTRAINT ck_plan_precio     CHECK (precio > 0)
+    id_plan  INT AUTO_INCREMENT PRIMARY KEY,
+    nombre_plan VARCHAR(50) NOT NULL,
+    duracion_meses INT NOT NULL,
+    precio DECIMAL(10,2)  NOT NULL,
+    descripcion  VARCHAR(200) NULL,
+    CONSTRAINT uq_plan_nombre UNIQUE (nombre_plan),
+    CONSTRAINT ck_plan_duracion CHECK (duracion_meses>0),
+    CONSTRAINT ck_plan_precio CHECK (precio>0)
 );
 
-
+-- Tipos de clases grupales que se ofrecen (Spinning, Yoga, etc.)
 CREATE TABLE clase (
-    id_clase         INT AUTO_INCREMENT PRIMARY KEY,
-    nombre_clase     VARCHAR(50) NOT NULL,
-    descripcion      VARCHAR(200) NULL,
+    id_clase  INT AUTO_INCREMENT PRIMARY KEY,
+    nombre_clase  VARCHAR(50) NOT NULL,
+    descripcion  VARCHAR(200) NULL,
     nivel_intensidad ENUM('bajo','medio','alto') NOT NULL,
     CONSTRAINT uq_clase_nombre UNIQUE (nombre_clase)
 );
 
-
+-- Registro general de socios / clientes
 CREATE TABLE cliente (
-    id_cliente        INT AUTO_INCREMENT PRIMARY KEY,
+    id_cliente  INT AUTO_INCREMENT PRIMARY KEY,
     numero_documento  VARCHAR(15)  NOT NULL,
-    nombres           VARCHAR(60)  NOT NULL,
-    apellidos         VARCHAR(60)  NOT NULL,
-    correo            VARCHAR(100) NOT NULL,
-    telefono          VARCHAR(15)  NULL,
-    fecha_nacimiento  DATE         NOT NULL,
-    fecha_registro    DATE         NOT NULL DEFAULT (CURRENT_DATE),
-    genero            ENUM('M','F','Otro') NULL,
-    estado            ENUM('activo','inactivo') NOT NULL DEFAULT 'activo',
+    nombres VARCHAR(60)  NOT NULL,
+    apellidos VARCHAR(60)  NOT NULL,
+    correo VARCHAR(100) NOT NULL,
+    telefono VARCHAR(15)  NULL,
+    fecha_nacimiento  DATE  NOT NULL,
+    fecha_registro  DATE  NOT NULL DEFAULT (CURRENT_DATE),
+    genero  ENUM('M','F','Otro') NULL,
+    estado  ENUM('activo','inactivo') NOT NULL DEFAULT 'activo',
     CONSTRAINT uq_cliente_documento UNIQUE (numero_documento),
     CONSTRAINT uq_cliente_correo    UNIQUE (correo),
-    CONSTRAINT ck_cliente_nacimiento CHECK (fecha_nacimiento >= '1900-01-01')
+    CONSTRAINT ck_cliente_nacimiento CHECK (fecha_nacimiento>='1900-01-01')
 );
 
+-- ---------------------------------------------------------------------
+-- 2. TABLAS QUE DEPENDEN DE LAS ANTERIORES
+-- ---------------------------------------------------------------------
 
+-- Tabla de personal. Tiene auto-referencia para asignar jefes/supervisores.
 CREATE TABLE empleado (
-    id_empleado         INT AUTO_INCREMENT PRIMARY KEY,
-    numero_documento    VARCHAR(15)   NOT NULL,
-    nombres             VARCHAR(60)   NOT NULL,
-    apellidos           VARCHAR(60)   NOT NULL,
-    correo              VARCHAR(100)  NOT NULL,
-    telefono            VARCHAR(15)   NULL,
-    fecha_contratacion  DATE          NOT NULL DEFAULT (CURRENT_DATE),
-    salario             DECIMAL(10,2) NOT NULL,
-    id_rol              INT           NOT NULL,
-    id_supervisor       INT           NULL,
-    estado              ENUM('activo','inactivo') NOT NULL DEFAULT 'activo',
+    id_empleado  INT AUTO_INCREMENT PRIMARY KEY,
+    numero_documento  VARCHAR(15) NOT NULL,
+    nombres  VARCHAR(60) NOT NULL,
+    apellidos VARCHAR(60) NOT NULL,
+    correo VARCHAR(100)  NOT NULL,
+    telefono VARCHAR(15) NULL,
+    fecha_contratacion  DATE NOT NULL DEFAULT(CURRENT_DATE),
+    salario DECIMAL(10,2) NOT NULL,
+    id_rol  INT  NOT NULL,
+    id_supervisor INT  NULL,
+    estado ENUM('activo','inactivo') NOT NULL DEFAULT 'activo',
     CONSTRAINT uq_empleado_documento UNIQUE (numero_documento),
-    CONSTRAINT uq_empleado_correo    UNIQUE (correo),
-    CONSTRAINT ck_empleado_salario   CHECK (salario > 0),
-      CONSTRAINT fk_empleado_rol
+    CONSTRAINT uq_empleado_correo  UNIQUE (correo),
+    CONSTRAINT ck_empleado_salario CHECK (salario >0),
+    -- Ojo: MariaDB no deja meter el id_empleado en un CHECK para validar que no sea 
+    -- su propio jefe. Esa regla la dejamos para resolverla con un trigger en 04_objetos.sql.
+    CONSTRAINT fk_empleado_rol
         FOREIGN KEY (id_rol) REFERENCES rol_empleado(id_rol)
         ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT fk_empleado_supervisor
@@ -86,53 +120,57 @@ CREATE TABLE empleado (
         ON DELETE SET NULL ON UPDATE CASCADE
 );
 
-
+-- Índice rápido para cuando toque filtrar empleados por cargo o armar reportes
 CREATE INDEX idx_empleado_rol ON empleado(id_rol);
 
-
+-- Extensión de empleado solo para los que son entrenadores (Relación 1 a 1).
+-- Se separó para no llenar la tabla empleado de campos nulos en administrativos.
 CREATE TABLE entrenador (
-    id_empleado          INT PRIMARY KEY,
-    especialidad         VARCHAR(60) NOT NULL,
+    id_empleado  INT PRIMARY KEY,
+    especialidad  VARCHAR(60) NOT NULL,
     numero_certificacion VARCHAR(30) NOT NULL,
-    fecha_certificacion  DATE        NOT NULL,
-    anios_experiencia    INT         NOT NULL DEFAULT 0,
+    fecha_certificacion  DATE NOT NULL,
+    anios_experiencia  INT NOT NULL DEFAULT 0,
     CONSTRAINT uq_entrenador_certificacion UNIQUE (numero_certificacion),
-    CONSTRAINT ck_entrenador_experiencia CHECK (anios_experiencia >= 0),
+    CONSTRAINT ck_entrenador_experiencia CHECK (anios_experiencia >=0),
     CONSTRAINT fk_entrenador_empleado
-        FOREIGN KEY (id_empleado) REFERENCES empleado(id_empleado)
-        ON DELETE CASCADE ON UPDATE CASCADE
+    FOREIGN KEY (id_empleado) REFERENCES empleado(id_empleado)
+    ON DELETE CASCADE ON UPDATE CASCADE
 );
 
-
+-- Máquinas y máquinas ubicadas en las distintas zonas
 CREATE TABLE equipo (
-    id_equipo          INT AUTO_INCREMENT PRIMARY KEY,
+    id_equipo  INT AUTO_INCREMENT PRIMARY KEY,
     codigo_inventario  VARCHAR(20) NOT NULL,
-    nombre_equipo      VARCHAR(60) NOT NULL,
-    tipo_equipo        ENUM('cardio','fuerza','funcional','otro') NOT NULL,
+    nombre_equipo VARCHAR(60) NOT NULL,
+    tipo_equipo  ENUM('cardio','fuerza','funcional','otro') NOT NULL,
     fecha_adquisicion  DATE NOT NULL,
-    estado             ENUM('operativo','mantenimiento','fuera_de_servicio')
-                        NOT NULL DEFAULT 'operativo',
-    id_zona            INT NOT NULL,
+    estado ENUM('operativo','mantenimiento','fuera_de_servicio') NOT NULL DEFAULT 'operativo',
+    id_zona INT NOT NULL,
     CONSTRAINT uq_equipo_codigo UNIQUE (codigo_inventario),
     CONSTRAINT fk_equipo_zona
         FOREIGN KEY (id_zona) REFERENCES zona(id_zona)
         ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
+-- ---------------------------------------------------------------------
+-- 3. ENTIDAD DÉBIL
+-- ---------------------------------------------------------------------
 
+-- Sesiones programadas. Es débil porque depende de la clase (usa clave primaria compuesta).
 CREATE TABLE horario_clase (
-    id_clase      INT  NOT NULL,
+    id_clase  INT  NOT NULL,
     numero_sesion INT  NOT NULL,
     fecha_sesion  DATE NOT NULL,
-    hora_inicio   TIME NOT NULL,
-    hora_fin      TIME NOT NULL,
-    id_zona       INT  NOT NULL,
-    id_empleado   INT  NOT NULL,  
-    cupo_maximo   INT  NOT NULL,
+    hora_inicio TIME NOT NULL,
+    hora_fin  TIME NOT NULL,
+    id_zona  INT  NOT NULL,
+    id_empleado  INT  NOT NULL,   -- Entrenador asignado
+    cupo_maximo  INT  NOT NULL,
     PRIMARY KEY (id_clase, numero_sesion),
     CONSTRAINT uq_horario_zona_fecha_hora UNIQUE (id_zona, fecha_sesion, hora_inicio),
-    CONSTRAINT ck_horario_horas CHECK (hora_fin > hora_inicio),
-    CONSTRAINT ck_horario_cupo  CHECK (cupo_maximo > 0),
+    CONSTRAINT ck_horario_horas CHECK (hora_fin >hora_inicio),
+    CONSTRAINT ck_horario_cupo  CHECK (cupo_maximo >0),
     CONSTRAINT fk_horario_clase
         FOREIGN KEY (id_clase) REFERENCES clase(id_clase)
         ON DELETE CASCADE ON UPDATE CASCADE,
@@ -146,14 +184,19 @@ CREATE TABLE horario_clase (
 
 CREATE INDEX idx_horario_fecha ON horario_clase(fecha_sesion);
 
+-- ---------------------------------------------------------------------
+-- 4. TABLAS INTERMEDIAS (RELACIONES MUCHOS A MUCHOS)
+-- ---------------------------------------------------------------------
+
+-- Historial de suscripciones compradas por los clientes (Cliente M:N Plan)
 CREATE TABLE membresia_cliente (
     id_membresia_cliente INT AUTO_INCREMENT PRIMARY KEY,
-    id_cliente     INT NOT NULL,
-    id_plan        INT NOT NULL,
-    fecha_inicio   DATE NOT NULL,
-    fecha_fin      DATE NOT NULL,
-    estado         ENUM('activa','vencida','cancelada') NOT NULL DEFAULT 'activa',
-    precio_pagado  DECIMAL(10,2) NOT NULL,
+    id_cliente  INT NOT NULL,
+    id_plan  INT NOT NULL,
+    fecha_inicio  DATE NOT NULL,
+    fecha_fin  DATE NOT NULL,
+    estado  ENUM('activa','vencida','cancelada') NOT NULL DEFAULT 'activa',
+    precio_pagado DECIMAL(10,2) NOT NULL,
     CONSTRAINT uq_membresia_cliente_plan_fecha UNIQUE (id_cliente, id_plan, fecha_inicio),
     CONSTRAINT ck_membresia_fechas CHECK (fecha_fin > fecha_inicio),
     CONSTRAINT ck_membresia_precio CHECK (precio_pagado > 0),
@@ -167,47 +210,59 @@ CREATE TABLE membresia_cliente (
 
 CREATE INDEX idx_membresia_estado ON membresia_cliente(estado);
 
+-- Control de asistencia a las clases (Cliente M:N Horario).
+-- La PK de horario es compuesta, así que la FK hacia allá también tiene que ser compuesta.
 CREATE TABLE asistencia (
-    id_asistencia   INT AUTO_INCREMENT PRIMARY KEY,
-    id_cliente      INT NOT NULL,
-    id_clase        INT NOT NULL,
-    numero_sesion   INT NOT NULL,
+    id_asistencia  INT AUTO_INCREMENT PRIMARY KEY,
+    id_cliente INT NOT NULL,
+    id_clase  INT NOT NULL,
+    numero_sesion  INT NOT NULL,
     fecha_registro  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT uq_asistencia_cliente_sesion UNIQUE (id_cliente, id_clase, numero_sesion),
     CONSTRAINT fk_asistencia_cliente
-        FOREIGN KEY (id_cliente) REFERENCES cliente(id_cliente)
-        ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (id_cliente) REFERENCES cliente(id_cliente)
+    ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT fk_asistencia_horario
-        FOREIGN KEY (id_clase, numero_sesion) REFERENCES horario_clase(id_clase, numero_sesion)
-        ON DELETE CASCADE ON UPDATE CASCADE
+    FOREIGN KEY (id_clase, numero_sesion) REFERENCES horario_clase(id_clase, numero_sesion)
+    ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE INDEX idx_asistencia_cliente ON asistencia(id_cliente);
 
+-- ---------------------------------------------------------------------
+-- 5. FINANZAS / PAGOS
+-- ---------------------------------------------------------------------
+
+-- Cobros realizados a las membresías vendidas
 CREATE TABLE pago (
-    id_pago               INT AUTO_INCREMENT PRIMARY KEY,
+    id_pago   INT AUTO_INCREMENT PRIMARY KEY,
     id_membresia_cliente  INT NOT NULL,
-    fecha_pago            DATE NOT NULL DEFAULT (CURRENT_DATE),
-    monto                 DECIMAL(10,2) NOT NULL,
-    metodo_pago           ENUM('efectivo','tarjeta','transferencia') NOT NULL,
-    estado_pago           ENUM('completado','pendiente','rechazado') NOT NULL DEFAULT 'completado',
-    CONSTRAINT ck_pago_monto CHECK (monto > 0),
+    fecha_pago  DATE NOT NULL DEFAULT (CURRENT_DATE),
+    monto   DECIMAL(10,2) NOT NULL,
+    metodo_pago  ENUM('efectivo','tarjeta','transferencia') NOT NULL,
+    estado_pago  ENUM('completado','pendiente','rechazado') NOT NULL DEFAULT 'completado',
+    CONSTRAINT ck_pago_monto CHECK (monto >0),
     CONSTRAINT fk_pago_membresia
-        FOREIGN KEY (id_membresia_cliente) REFERENCES membresia_cliente(id_membresia_cliente)
-        ON DELETE CASCADE ON UPDATE CASCADE
+    FOREIGN KEY (id_membresia_cliente) REFERENCES membresia_cliente(id_membresia_cliente)
+    ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 CREATE INDEX idx_pago_fecha ON pago(fecha_pago);
 
-
+-- ---------------------------------------------------------------------
+-- 6. TABLA SISTEMA DE AUDITORÍA
+-- ---------------------------------------------------------------------
+-- Esta tabla no pertenece al modelo de negocio directo, sino que se creó 
+-- para guardar los logs de cambios exigidos en la guía (la llenan los triggers).
 CREATE TABLE auditoria (
-    id_auditoria         INT AUTO_INCREMENT PRIMARY KEY,
-    tabla_afectada        VARCHAR(50) NOT NULL,
-    operacion             ENUM('INSERT','UPDATE','DELETE') NOT NULL,
-    usuario_bd            VARCHAR(100) NOT NULL,
-    fecha_operacion        DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    id_registro_afectado   INT NULL,
-    valores_anteriores     JSON NULL,
-    valores_nuevos         JSON NULL
+    id_auditoria  INT AUTO_INCREMENT PRIMARY KEY,
+    tabla_afectada  VARCHAR(50) NOT NULL,
+    operacion  ENUM('INSERT','UPDATE','DELETE') NOT NULL,
+    usuario_bd  VARCHAR(100) NOT NULL,
+    fecha_operacion  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    id_registro_afectado INT NULL,
+    valores_anteriores JSON NULL,
+    valores_nuevos JSON NULL
 );
 
+-- 13 tablas en total
