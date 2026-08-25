@@ -1,44 +1,75 @@
+-- =====================================================================
+-- PROYECTO BD: GYMCONNECT - DATOS DE PRUEBA Y TEST DE RESTRICCIONES
+-- Archivo: 02_inserts.sql
+-- Motor: MySQL/MariaDB
+--
+-- Notas del grupo:
+-- Este script llena la base de datos con datos realistas para probar las 
+-- consultas del proyecto. Ejecutar SOLO después de haber corrido el 01_ddl.sql.
+--
+--                           Integrantes:
+--                    Katherin Aragón Calderon
+--                      Victor Manuel Aragón
+--                      Julio Cesar Villegas
+--                      Oscar Esteban Lopez
+--                      Juan Pablo Giraldo
+-- =====================================================================
+
 USE gymconnect_db;
 
+-- Desactivamos temporalmente la revisión de llaves foráneas para poder hacer la 
+-- inserción masiva en orden sin que el motor moleste por las relaciones intermedias.
+SET FOREIGN_KEY_CHECKS =0;
 
+-- ---------------------------------------------------------------------
+-- 1. ROLES DE EMPLEADOS (Catálogo básico)
+-- ---------------------------------------------------------------------
 INSERT INTO rol_empleado (id_rol, nombre_rol, descripcion) VALUES
-    (1, 'Gerente General', 'Direccion general del gimnasio'),
-    (2, 'Administrador', 'Gestion administrativa y financiera'),
-    (3, 'Recepcionista', 'Atencion al cliente y control de ingreso'),
-    (4, 'Entrenador', 'Instruccion de clases y acompanamiento de rutinas'),
+    (1, 'Gerente General', 'Dirección general del gimnasio'),
+    (2, 'Administrador', 'Gestión administrativa y financiera'),
+    (3, 'Recepcionista', 'Atención al cliente y control de ingreso'),
+    (4, 'Entrenador', 'Instrucción de clases y acompañamiento de rutinas'),
     (5, 'Auxiliar de mantenimiento', 'Mantenimiento de equipos e instalaciones');
 
-
+-- ---------------------------------------------------------------------
+-- 2. ZONAS Y ESPACIOS (Distribución por pisos)
+-- ---------------------------------------------------------------------
 INSERT INTO zona (id_zona, nombre_zona, piso, capacidad_maxima) VALUES
-    (1, 'Recepcion', 1, 10),
-    (2, 'Administracion', 1, 6),
+    (1, 'Recepción', 1, 10),
+    (2, 'Administración', 1, 6),
     (3, 'Zona de cardio', 1, 25),
     (4, 'Vestidores', 1, 20),
     (5, 'Cuarto de comunicaciones', 1, 2),
     (6, 'Zona de pesas', 2, 30),
     (7, 'Entrenamiento funcional', 2, 20),
-    (8, 'Salon de clases grupales', 3, 25),
+    (8, 'Salón de clases grupales', 3, 25),
     (9, 'Zona de spinning', 3, 20),
     (10, 'Oficina de entrenadores', 3, 8);
 
-
+-- ---------------------------------------------------------------------
+-- 3. PLANES DE MEMBRESÍA
+-- ---------------------------------------------------------------------
 INSERT INTO membresia_plan (id_plan, nombre_plan, duracion_meses, precio, descripcion) VALUES
     (1, 'Plan Mensual', 1, 120000.0, 'Acceso general por un mes'),
     (2, 'Plan Trimestral', 3, 320000.0, 'Acceso general por tres meses'),
     (3, 'Plan Semestral', 6, 580000.0, 'Acceso general por seis meses'),
-    (4, 'Plan Anual', 12, 1050000.0, 'Acceso general por un anio, incluye clases grupales'),
+    (4, 'Plan Anual', 12, 1050000.0, 'Acceso general por un año, incluye clases grupales'),
     (5, 'Plan Estudiantil', 1, 90000.0, 'Tarifa preferencial para estudiantes acreditados');
 
-
+-- ---------------------------------------------------------------------
+-- 4. CATÁLOGO DE CLASES GRUPALES
+-- ---------------------------------------------------------------------
 INSERT INTO clase (id_clase, nombre_clase, descripcion, nivel_intensidad) VALUES
-    (1, 'Spinning', 'Rutina cardiovascular en bicicleta estatica', 'alto'),
+    (1, 'Spinning', 'Rutina cardiovascular en bicicleta estática', 'alto'),
     (2, 'Funcional', 'Entrenamiento funcional de fuerza y resistencia', 'medio'),
-    (3, 'Yoga', 'Sesion de flexibilidad y control corporal', 'bajo'),
-    (4, 'Zumba', 'Rutina de baile aerobico', 'medio'),
-    (5, 'Pesas guiadas', 'Rutina de fuerza con acompanamiento del entrenador', 'alto'),
-    (6, 'Stretching', 'Sesion de estiramiento y movilidad', 'bajo');
+    (3, 'Yoga', 'Sesión de flexibilidad y control corporal', 'bajo'),
+    (4, 'Zumba', 'Rutina de baile aeróbico', 'medio'),
+    (5, 'Pesas guiadas', 'Rutina de fuerza con acompañamiento del entrenador', 'alto'),
+    (6, 'Stretching', 'Sesión de estiramiento y movilidad', 'bajo');
 
-
+-- ---------------------------------------------------------------------
+-- 5. CLIENTES (35 registros de prueba)
+-- ---------------------------------------------------------------------
 INSERT INTO cliente (id_cliente, numero_documento, nombres, apellidos, correo, telefono, fecha_nacimiento, fecha_registro, genero, estado) VALUES
     (1, '535901256', 'Katherin', 'Duran Perez', 'katherin.duran@correo.com', '3321819600', '1980-04-08', '2025-03-10', 'Otro', 'inactivo'),
     (2, '974669077', 'Jorge', 'Ortiz Martinez', 'jorge.ortiz@correo.com', '3940265423', '1996-02-03', '2025-07-16', 'M', 'activo'),
@@ -76,7 +107,9 @@ INSERT INTO cliente (id_cliente, numero_documento, nombres, apellidos, correo, t
     (34, '815965556', 'Juan', 'Ramirez Jimenez', 'juan.ramirez@correo.com', '3631931491', '1977-06-18', '2025-05-28', 'Otro', 'activo'),
     (35, '1062700150', 'Carolina', 'Giraldo Ortiz', 'carolina.giraldo@correo.com', '3165726284', '2005-08-14', '2024-12-11', 'F', 'activo');
 
-
+-- ---------------------------------------------------------------------
+-- 6. EMPLEADOS (Incluye los jefes y a quién supervisan)
+-- ---------------------------------------------------------------------
 INSERT INTO empleado (id_empleado, numero_documento, nombres, apellidos, correo, telefono, fecha_contratacion, salario, id_rol, id_supervisor, estado) VALUES
     (1, '537196854', 'Ricardo', 'Duran Perez', 'ricardo.duran@gymconnect.com', '3147379965', '2022-01-10', 6500000.0, 1, NULL, 'activo'),
     (2, '71632768', 'Juan Pablo', 'Giraldo', 'juan pablo.giraldo@gymconnect.com', '3752735454', '2022-02-01', 4200000.0, 2, 1, 'activo'),
@@ -94,7 +127,9 @@ INSERT INTO empleado (id_empleado, numero_documento, nombres, apellidos, correo,
     (14, '223102467', 'Fernando', 'Mendoza', 'fernando.mendoza@gymconnect.com', '3334123281', '2023-03-20', 1500000.0, 5, 2, 'activo'),
     (15, '346151245', 'Jorge', 'Cardenas', 'jorge.cardenas@gymconnect.com', '3067974034', '2023-04-20', 1500000.0, 5, 2, 'activo');
 
-
+-- ---------------------------------------------------------------------
+-- 7. DETALLE DE ENTRENADORES (Vinculados a su id de empleado)
+-- ---------------------------------------------------------------------
 INSERT INTO entrenador (id_empleado, especialidad, numero_certificacion, fecha_certificacion, anios_experiencia) VALUES
     (7, 'Spinning', 'CERT-2007', '2023-01-15', 5),
     (8, 'Entrenamiento funcional', 'CERT-2008', '2023-02-15', 8),
@@ -103,7 +138,9 @@ INSERT INTO entrenador (id_empleado, especialidad, numero_certificacion, fecha_c
     (11, 'Zumba', 'CERT-2011', '2023-05-15', 5),
     (12, 'Movilidad y stretching', 'CERT-2012', '2023-06-15', 10);
 
-
+-- ---------------------------------------------------------------------
+-- 8. INVENTARIO DE EQUIPOS
+-- ---------------------------------------------------------------------
 INSERT INTO equipo (id_equipo, codigo_inventario, nombre_equipo, tipo_equipo, fecha_adquisicion, estado, id_zona) VALUES
     (1, 'INV-1001', 'Caminadora electrica', 'cardio', '2024-04-16', 'operativo', 3),
     (2, 'INV-1002', 'Caminadora electrica', 'cardio', '2022-03-14', 'operativo', 3),
@@ -122,7 +159,9 @@ INSERT INTO equipo (id_equipo, codigo_inventario, nombre_equipo, tipo_equipo, fe
     (15, 'INV-1015', 'Kettlebells', 'funcional', '2023-09-10', 'operativo', 7),
     (16, 'INV-1016', 'Cajones pliometricos', 'funcional', '2023-05-15', 'operativo', 7);
 
-
+-- ---------------------------------------------------------------------
+-- 9. PROGRAMACIÓN DE HORARIOS Y CLASES
+-- ---------------------------------------------------------------------
 INSERT INTO horario_clase (id_clase, numero_sesion, fecha_sesion, hora_inicio, hora_fin, id_zona, id_empleado, cupo_maximo) VALUES
     (1, 1, '2026-09-01', '06:00:00', '06:50:00', 9, 7, 20),
     (2, 1, '2026-09-02', '08:00:00', '08:50:00', 7, 8, 15),
@@ -165,7 +204,9 @@ INSERT INTO horario_clase (id_clase, numero_sesion, fecha_sesion, hora_inicio, h
     (3, 7, '2026-10-09', '17:00:00', '17:50:00', 8, 9, 20),
     (4, 7, '2026-10-10', '19:00:00', '19:50:00', 8, 10, 20);
 
-
+-- ---------------------------------------------------------------------
+-- 10. PLANES ASIGNADOS A CLIENTES
+-- ---------------------------------------------------------------------
 INSERT INTO membresia_cliente (id_membresia_cliente, id_cliente, id_plan, fecha_inicio, fecha_fin, estado, precio_pagado) VALUES
     (1, 1, 4, '2025-11-24', '2026-11-19', 'activa', 1050000.0),
     (2, 2, 1, '2025-11-10', '2025-12-10', 'vencida', 120000.0),
@@ -203,7 +244,9 @@ INSERT INTO membresia_cliente (id_membresia_cliente, id_cliente, id_plan, fecha_
     (34, 34, 3, '2026-02-22', '2026-08-21', 'activa', 580000.0),
     (35, 35, 4, '2026-07-04', '2027-06-29', 'activa', 1050000.0);
 
-
+-- ---------------------------------------------------------------------
+-- 11. ASISTENCIAS A CLASES
+-- ---------------------------------------------------------------------
 INSERT INTO asistencia (id_asistencia, id_cliente, id_clase, numero_sesion, fecha_registro) VALUES
     (1, 35, 1, 5, '2026-09-06 16:45:00'),
     (2, 32, 5, 6, '2026-09-07 15:04:00'),
@@ -266,7 +309,9 @@ INSERT INTO asistencia (id_asistencia, id_cliente, id_clase, numero_sesion, fech
     (59, 4, 1, 6, '2026-09-07 12:43:00'),
     (60, 7, 2, 6, '2026-09-07 20:28:00');
 
-
+-- ---------------------------------------------------------------------
+-- 12. REGISTRO DE PAGOS
+-- ---------------------------------------------------------------------
 INSERT INTO pago (id_pago, id_membresia_cliente, fecha_pago, monto, metodo_pago, estado_pago) VALUES
     (1, 1, '2025-11-24', 1050000.0, 'efectivo', 'completado'),
     (2, 30, '2026-06-24', 580000.0, 'tarjeta', 'completado'),
@@ -296,7 +341,7 @@ INSERT INTO pago (id_pago, id_membresia_cliente, fecha_pago, monto, metodo_pago,
     (26, 19, '2026-03-31', 90000.0, 'transferencia', 'pendiente'),
     (27, 33, '2026-05-27', 1050000.0, 'efectivo', 'completado'),
     (28, 20, '2026-03-15', 580000.0, 'tarjeta', 'completado'),
-    (29, 9, '2025-11-05', 580000.0, 'tarjeta', 'pendiente'),
+    (29, 9, '2025-11-05', '580000.0', 'tarjeta', 'pendiente'),
     (30, 35, '2026-07-04', 1050000.0, 'efectivo', 'completado'),
     (31, 3, '2026-05-10', 120000.0, 'tarjeta', 'completado'),
     (32, 10, '2026-06-28', 1050000.0, 'transferencia', 'completado'),
@@ -308,3 +353,76 @@ INSERT INTO pago (id_pago, id_membresia_cliente, fecha_pago, monto, metodo_pago,
     (38, 34, '2026-02-22', 580000.0, 'transferencia', 'completado'),
     (39, 31, '2026-06-24', 1050000.0, 'efectivo', 'completado'),
     (40, 8, '2026-04-14', 90000.0, 'transferencia', 'completado');
+
+-- Volvemos a activar la validación de llaves foráneas
+SET FOREIGN_KEY_CHECKS = 1;
+
+
+-- =====================================================================
+-- PRUEBAS DE CASOS DE ERROR (VALIDACIÓN DE RESTRICCIONES)
+-- =====================================================================
+-- Ojo: Ejecuté estas sentencias de forma individual contra la BD limpia 
+-- con los datos de arriba para comprobar que el motor sí rebota los datos 
+-- incorrectos tal como lo pide el taller.
+--
+-- Nota: Para probar todo el script seguido sin que se detenga al primer error, 
+-- ejecutarlo desde la terminal con el parámetro --force:
+-- mysql -u usuario -p --force gymconnect_db < 02_inserts.sql
+-- =====================================================================
+
+-- 1. Prueba de Llave Primaria duplicada (horario_clase)
+-- Intento registrar la misma sesión (clase 1, sesión 1) que ya existe.
+--INSERT INTO horario_clase (id_clase, numero_sesion, fecha_sesion, hora_inicio, hora_fin, id_zona, id_empleado, cupo_maximo)
+--VALUES (1, 1, '2026-09-01', '06:00:00', '06:50:00', 9, 7, 20);
+-- El motor me sacó este error:
+-- ERROR 1062 (23000): Duplicate entry '1-1' for key 'PRIMARY'
+
+-- 2. Prueba de Llave Foránea inexistente (membresia_cliente)
+-- Intento vender un plan con un ID que no existe (id_plan = 999).
+--INSERT INTO membresia_cliente (id_cliente, id_plan, fecha_inicio, fecha_fin, precio_pagado)
+--VALUES (1, 999, '2026-09-01', '2026-10-01', 120000);
+-- El motor me sacó este error:
+-- ERROR 1452 (23000): Cannot add or update a child row: a foreign key constraint fails
+
+-- 3. Prueba de NOT NULL (cliente)
+-- Trato de guardar un cliente sin enviarle el nombre (nombres en NULL).
+--INSERT INTO cliente (numero_documento, nombres, apellidos, correo, fecha_nacimiento)
+--VALUES ('999999999', NULL, 'Test Apellido', 'test999@correo.com', '1990-01-01');
+-- El motor me sacó este error:
+-- ERROR 1048 (23000): Column 'nombres' cannot be null
+
+-- 4. Prueba de campo UNIQUE (cliente)
+-- Registro a alguien con una cédula/documento que ya existe en la base de datos.
+--INSERT INTO cliente (numero_documento, nombres, apellidos, correo, fecha_nacimiento)
+--VALUES ('1013712702', 'Test', 'Duplicado', 'test_unique@correo.com', '1990-01-01');
+-- El motor me sacó este error:
+-- ERROR 1062 (23000): Duplicate entry '1013712702' for key 'uq_cliente_documento'
+
+-- 5. Prueba del CHECK de monto (pago)
+-- Intento meter un pago con valor negativo (-50000).
+--INSERT INTO pago (id_membresia_cliente, fecha_pago, monto, metodo_pago)
+--VALUES (1, '2026-09-01', -50000, 'efectivo');
+-- El motor me sacó este error:
+-- ERROR 4025 (23000): CONSTRAINT `ck_pago_monto` failed for `gymconnect_db`.`pago`
+
+-- 6. Prueba del CHECK de fechas (membresia_cliente)
+-- Registro una membresía donde la fecha fin es anterior a la fecha de inicio.
+--INSERT INTO membresia_cliente (id_cliente, id_plan, fecha_inicio, fecha_fin, precio_pagado)
+--VALUES (2, 1, '2026-09-10', '2026-09-01', 120000);
+-- El motor me sacó este error:
+-- ERROR 4025 (23000): CONSTRAINT `ck_membresia_fechas` failed for `gymconnect_db`.`membresia_cliente`
+
+-- 7. Prueba del CHECK de horas (horario_clase)
+-- Creo una clase que termina antes de la hora a la que empieza.
+--INSERT INTO horario_clase (id_clase, numero_sesion, fecha_sesion, hora_inicio, hora_fin, id_zona, id_empleado, cupo_maximo)
+--VALUES (2, 99, '2026-10-15', '10:00:00', '09:00:00', 7, 8, 15);
+-- El motor me sacó este error:
+-- ERROR 4025 (23000): CONSTRAINT `ck_horario_horas` failed for `gymconnect_db`.`horario_clase`
+
+-- 8. Prueba del UNIQUE de cruce de salón/horario (horario_clase)
+-- Intento programar una clase en un salón y hora que ya estaban reservados para otra sesión.
+--INSERT INTO horario_clase (id_clase, numero_sesion, fecha_sesion, hora_inicio, hora_fin, id_zona, id_empleado, cupo_maximo)
+--VALUES (2, 98, '2026-09-01', '06:00:00', '06:50:00', 9, 8, 15);
+-- El motor me sacó este error:
+-- ERROR 1062 (23000): Duplicate entry '9-2026-09-01-06:00:00' for key 'uq_horario_zona_fecha_hora'
+
