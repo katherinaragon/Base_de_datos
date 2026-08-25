@@ -17,7 +17,7 @@ INNER JOIN empleado e     ON e.id_empleado = tr.id_empleado
 ORDER BY hc.fecha_sesion, hc.hora_inicio;
 
 -- Consulta 2
-
+-- realizando pruebas
 SELECT
     CONCAT(c.nombres, ' ', c.apellidos) AS cliente,
     cl.nombre_clase,
