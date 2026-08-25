@@ -1,6 +1,6 @@
 USE gymconnect_db;
 
-
+-- prueba commits
 -- Consulta 1
 SELECT
     cl.nombre_clase,
