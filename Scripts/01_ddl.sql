@@ -33,13 +33,13 @@ USE gymconnect_db;
 -- 1. TABLAS BÁSICAS Y CATÁLOGOS (Sin dependencias)
 -- ---------------------------------------------------------------------
 
-<<<<<<< HEAD
--- Cargo o rol de los trabajadores (Recepción,Entrenador,Admin, etc.)
-=======
--- 1. Scripts de creación de todas las tablas
---Victor Manuel
 
->>>>>>> 86cf3a9b0435665982be67013ca981309758d163
+-- Cargo o rol de los trabajadores (Recepción,Entrenador,Admin, etc.)
+
+-- 1. Scripts de creación de todas las tablas
+
+
+
 CREATE TABLE rol_empleado (
     id_rol  INT AUTO_INCREMENT PRIMARY KEY,
     nombre_rol  VARCHAR(40)  NOT NULL,
